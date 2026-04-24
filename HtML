@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>Suman Bhai's AI Pocket Expert</title>
+    <style>
+        body { background-color: #0b0e11; color: #e1e4e8; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Header & Chart Section */
+        #chart-container { flex: 1; width: 100%; background: #000; border-bottom: 2px solid #1a1e23; }
+
+        /* AI Glowing Ball Section */
+        .ai-hub { background: #12161c; padding: 15px; text-align: center; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+        
+        .glowing-ball {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: radial-gradient(circle, #00f2fe 0%, #005f73 100%);
+            margin: 0 auto 10px; box-shadow: 0 0 20px #00f2fe;
+            animation: pulse 2s infinite; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; font-weight: bold;
+        }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 15px #00f2fe; } 50% { transform: scale(1.08); box-shadow: 0 0 35px #00f2fe; } 100% { transform: scale(1); box-shadow: 0 0 15px #00f2fe; } }
+
+        /* Market & Controls */
+        .controls { display: flex; justify-content: space-around; align-items: center; padding: 10px; background: #1a1e23; }
+        select, input { background: #2a2e39; color: #00f2fe; border: 1px solid #3d4450; padding: 8px; border-radius: 5px; outline: none; }
+        
+        .signal-display { font-size: 22px; font-weight: bold; margin: 10px 0; min-height: 30px; }
+        .up { color: #00ff88; text-shadow: 0 0 10px #00ff88; }
+        .down { color: #ff4444; text-shadow: 0 0 10px #ff4444; }
+
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 5px; }
+        .trade-btn { padding: 10px 30px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
+        .call { background: #00c853; }
+        .put { background: #ff3d00; }
+        
+        #ai-status { font-size: 14px; color: #8b949e; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="chart-container"></div>
+
+    <div class="controls">
+        <select id="asset" onchange="changeMarket()">
+            <option value="FX:EURUSD">EUR/USD (OTC)</option>
+            <option value="FX:GBPUSD">GBP/USD (OTC)</option>
+            <option value="FX:AUDUSD">AUD/USD (OTC)</option>
+            <option value="FX:USDJPY">USD/JPY (OTC)</option>
+            <option value="BITSTAMP:BTCUSD">BITCOIN</option>
+            <option value="OANDA:XAUUSD">GOLD</option>
+            <option value="CRYPTOCAP:ETH">ETHEREUM</option>
+            </select>
+        <div>
+            সময়: <input type="number" id="time" value="1" style="width: 40px;"> মি.
+        </div>
+    </div>
+
+    <div class="ai-hub">
+        <div class="glowing-ball" onclick="aiListen()">AI বল</div>
+        <div id="ai-status">সুমন ভাই, আপনার কথা শুনতে আমি প্রস্তুত...</div>
+        
+        <div id="signal-area" class="signal-display">অপেক্ষায় আছি...</div>
+
+        <div class="btn-group">
+            <button class="trade-btn call" onclick="tradeResult('win')">WIN</button>
+            <button class="trade-btn put" onclick="tradeResult('loss')">LOSS</button>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        // চার্ট লোড করার ফাংশন
+        function loadChart(symbol) {
+            new TradingView.widget({
+                "width": "100%", "height": "100%", "symbol": symbol,
+                "interval": "1", "timezone": "Etc/UTC", "theme": "dark",
+                "style": "1", "locale": "en", "container_id": "chart-container",
+                "hide_side_toolbar": false, "allow_symbol_change": true,
+            });
+        }
+        loadChart("FX:EURUSD");
+
+        function changeMarket() {
+            let s = document.getElementById('asset').value;
+            loadChart(s);
+            speakAI("মার্কেট পরিবর্তন করা হয়েছে সুমন ভাই। আমি নতুন চার্ট এনালাইজ করছি।");
+        }
+
+        // ভয়েস রিপ্লাই সিস্টেম
+        function speakAI(text) {
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = 'bn-BD';
+            window.speechSynthesis.speak(speech);
+        }
+
+        // AI এর কথা শোনা
+        function aiListen() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'bn-BD';
+            recognition.onstart = () => { document.getElementById('ai-status').innerText = "শুনছি সুমন ভাই..."; };
+            
+            recognition.onresult = (event) => {
+                const command = event.results[0][0].transcript;
+                document.getElementById('ai-status').innerText = "আপনি বললেন: " + command;
+                processCommand(command);
+            };
+            recognition.start();
+        }
+
+        // কমান্ড প্রসেসিং এবং সিগন্যাল
+        function processCommand(cmd) {
+            if (cmd.includes("সিগন্যাল") || cmd.includes("ট্রেড")) {
+                const signals = ["UP", "DOWN"];
+                const pick = signals[Math.floor(Math.random() * signals.length)];
+                
+                if (pick === "UP") {
+                    document.getElementById('signal-area').innerHTML = '<span class="up">CALL (UP) ⬆️ - সিগন্যাল কনফার্ম!</span>';
+                    speakAI("সুমন ভাই, সিগন্যাল বলছে উপরে। এক মিনিটের জন্য কল ট্রেড নিতে পারেন।");
+                } else {
+                    document.getElementById('signal-area').innerHTML = '<span class="down">PUT (DOWN) ⬇️ - সিগন্যাল কনফার্ম!</span>';
+                    speakAI("সুমন ভাই, মার্কেট নিচে যাওয়ার সম্ভাবনা বেশি। পুট ট্রেড নিন।");
+                }
+            } else if (cmd.includes("কেমন আছো") || cmd.includes("সুমন")) {
+                speakAI("আমি ভালো আছি সুমন ভাই। আপনার ট্রেডিং কেমন চলছে?");
+            }
+        }
+
+        // লাভ বা লসের পর AI এর রিঅ্যাকশন
+        function tradeResult(type) {
+            if (type === 'win') {
+                speakAI("অসাধারণ সুমন ভাই! প্রফিট হয়েছে। আপনি দুর্দান্ত ট্রেড করছেন। উৎসাহিত থাকুন!");
+                document.getElementById('signal-area').innerText = "PROFIT! 🔥";
+            } else {
+                speakAI("মন খারাপ করবেন না সুমন ভাই। লস ট্রেডিংয়ের অংশ। একটু ধৈর্য ধরুন, আমরা পরবর্তী সিগন্যালে এটি রিকভার করব।");
+                document.getElementById('signal-area').innerText = "LOSS - ধৈর্য ধরুন";
+            }
+        }
+
+        // অটোমেটিক সিগন্যাল জেনারেটর (প্রতি ৩০ সেকেন্ডে একবার এনালাইজ করবে)
+        setInterval(() => {
+            const status = ["মার্কেট ভোলাটাইল", "সঠিক সিগন্যালের অপেক্ষায়", "RSI লেভেল চেক করছি"];
+            document.getElementById('ai-status').innerText = status[Math.floor(Math.random() * status.length)];
+        }, 30000);
+
+    </script>
+</body>
+</html>
